@@ -1,0 +1,86 @@
+#play_chord [:c4, :e4, :g4]
+$tempo = 2
+$f8 = $tempo * 0.125 #Eight note
+$f4 = $tempo * 0.25 #Quarter note
+$f2 = $tempo * 0.5 #Half note
+$f1 = $tempo * 1 #Whole note 
+$f16 = $f8/2
+$f32 = $f16/2
+$f64 = $f32/2
+$d4 = $f4*1.5
+$d8 = $f8+$f16
+$d16 = $f16 + $f32
+$d32 = $f32 + $f64
+$d64 = 1.5 * $f64
+
+c1 = [:c5, :fs5]
+c2 = [:cs5, :g5]
+
+#in_thread(name: :ma) {main}
+#in_thread(name: :ba) {bass}
+in_thread(name: :dr) {drums}
+
+define :drums do
+  sample_to_loop = :loop_amen
+  dur = sample_duration sample_to_loop
+  newrate = $f1/dur
+  sample_rate = 1/newrate
+  loop do
+    sample sample_to_loop, rate: sample_rate, amp: 4
+    sleep newdur
+  end
+end
+
+define :main do
+  with_synth :saw do
+    #with_fx(:slicer, phase: $d32, phase_slide: $f64, mix:1.0, wave:1, invert_wave: 0, amp: 0.8) do
+      with_fx :distortion, distort: 0.99 do
+  (0..4).each do
+    strum(1,c1, $d8)
+    strum(1,c1, $d8)
+    strum(1,c1, $d8)
+    strum(1,c1, $d8)
+    strum(1,c2, $f8)
+    strum(1,c2, $f8)
+    strum(1,c1, $d8)
+    strum(1,c1, $d8)
+    strum(1,c1, $f8)
+    sleep $f2
+  end
+      end
+    #end
+  end
+end
+
+def strum(n, chord, dur)
+
+  lengths = [$f64, $f64, $f32, $f64, $f64, $f32, $f4]
+  sleeps = [$d64, $d64, $d32,$d64, $d64, $d32, $d4]
+  totdur = 0
+  totdur = sleeps.inject(0) { |totdur, i| totdur + i}
+  factor = dur/totdur
+  print factor
+  for ctr in 0..n-1
+    i = 0
+    lengths.each do |n|
+      play chord, release: lengths[i]*factor
+      sleep sleeps[i]*factor
+      i = i + 1
+    end
+  end
+end
+define :bass do
+  with_fx :distortion, distort: 0.99 do
+    (0..4).each do
+      (0..2).each do
+        use_synth :dsaw
+        play :G2, release: $f8
+        sleep $f8
+        play :A2, release: $f8
+        sleep $f8
+        sleep $f4
+      end
+      sleep $f2
+    end
+  end
+end

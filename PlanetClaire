@@ -1,0 +1,141 @@
+tempo = 2
+f8 = tempo * 0.125 #Eight note
+f4 = tempo * 0.25 #Quarter note
+f2 = tempo * 0.5 #Half note
+f1 = tempo * 1 #Whole note 
+f16 = f8/2
+f32 = f16/2
+f64 = f32/2
+d2 = f2+f4
+d4 = f4+f8
+d8 = f8+f16
+d16 = f16 + f32
+d32 = f32 + f64
+flong = f1 + d2
+r = :d0
+bassThreadAmp = 1
+exitall = 0
+
+bass2 = [r, :a2,:a2, :e3, :e3,:ds3,:d3]
+bass2times = [f4,f8, f8, f16, f16,f8,f4]
+
+bassline = [:e2, :e2, :fs2, :e2, :g2, :e2, :a2, :g2]
+keyboards = [:e5, :ds5, :d5, :cs5, :c5, :cs5, :d5, :ds5, :e5, :b4, :as4, :a4, :b4, :as4, :a4, #41
+  :as, r,:ds5, :e5, r, :ds5, :e5, :e5, r,r, :ds5, :e5, r, 
+        :ds5, :e5,:e5, :e5,r]
+keytimes = [flong, f4, flong, f4, d2, f4,d2,f4,f1,f1,f1,f1,f1,f1,f1,
+  d2, f8, f8,f8, d2, f8,f8,f8,   f2,f8,   f8,f8,d2,
+  f8,f8,f8,f8,d8,d2]
+
+in_thread(name: :ba) {bassThread}
+in_thread(name: :ba2) {bass2Thread}
+in_thread(name: :ma) {keyboardsThread}
+in_thread(name: :dr) {drums}
+#in_thread(name: :we) {weird}
+
+define :bass2Thread do
+  use_synth :saw
+  while true
+    j = 0
+    bass2.each do |n|
+      length = bass2times[j]
+      if (n != :d0) then 
+          play n, release: length
+      end
+      sleep length
+      j = j + 1
+      if (exitall == 1) then
+        stop
+      end
+    end
+  end
+end
+
+define :bassThread do
+  use_synth :saw
+      with_fx :distortion, distort: 0.8 do
+        with_fx(:reverb, room: 0.5, mix: 0.3) do
+          while true
+            bassline.each do |n|
+              play n, release: f8, amp: bassThreadAmp
+              print bassThreadAmp
+              bassThreadAmp = bassThreadAmp * bassThreadAmp
+              sleep f8
+            end
+          end
+        end
+      end
+end
+
+define :keyboardsThread do
+
+  use_synth :pretty_bell
+  lowcut = note(:E7) # ~ 40Hz
+  highcut = note(:G8) # ~ 3000Hz
+  duration = 2.0
+  bpm_scale = (60 /300).to_f
+  
+  # scale the note length based on current tempo
+  slide_duration = f16
+  k = 0
+  if (k == 0) then
+    with_fx :distortion, distort: 0.99 do
+      with_fx :rlpf, cutoff: lowcut, cutoff_slide: slide_duration do |c|
+        i = 0
+        keyboards.each do |n|
+          length = keytimes[i]
+          if (n != :d0) then 
+              play n, release: length, amp: 0.2
+              #wobble_time = [1, 6, 6, 2, 1, 2, 4, 8, 3, 3].choose
+              #c.ctl cutoff_slide: ((duration / wobble_time.to_f) / 2.0)
+          end
+          sleep length
+          i = i + 1
+        end
+      end
+    end
+  end
+ # done with keyboards, now mess up the bass.
+  sleep f1
+  sleep f8
+  in_thread(name: :ba3) {bass2Thread}
+  sleep f8
+  in_thread(name: :ba4) {bass2Thread}
+  sleep f8
+  in_thread(name: :ba5) {bass2Thread}
+  sleep f8
+  in_thread(name: :ba6) {bass2Thread}
+  bassThreadAmp = 0.99999
+  sleep f1
+  sleep f1
+  sleep f1
+  sleep f1
+  in_thread(name: :wt) {weirdThread}
+end
+define :weirdThread do
+  #loop do
+    sample_to_loop = :ambi_lunar_land
+    dur = sample_duration sample_to_loop
+    sample sample_to_loop, amp: 25
+    sleep dur
+  #end
+  exitall = 1
+  stop 2
+end
+
+define :drums do
+  sample_to_loop = :loop_amen
+  dur = sample_duration sample_to_loop
+  newdur = 2
+  print newdur
+  sample_rate = dur/newdur
+  loop do
+    sample sample_to_loop, rate: sample_rate, amp: 4
+    sleep newdur
+    print '...'
+    if (exitall == 1) then
+      stop
+    end
+  end
+end
+
