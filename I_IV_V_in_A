@@ -1,5 +1,4 @@
 # blues in A.
-# subroutine to play a measure: takes chord and bassline.
 tempo = 2
 f8 = tempo * 0.125 #Eight note
 f4 = tempo * 0.25 #Quarter note
