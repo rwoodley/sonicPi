@@ -1,0 +1,96 @@
+# blues in A.
+# subroutine to play a measure: takes chord and bassline.
+tempo = 2
+f8 = tempo * 0.125 #Eight note
+f4 = tempo * 0.25 #Quarter note
+f2 = tempo * 0.5 #Half note
+f1 = tempo * 1 #Whole note 
+f16 = f8/2
+f32 = f16/2
+f64 = f32/2
+d2 = f2+f4
+d4 = f4+f8
+d8 = f8+f16
+d16 = f16 + f32
+d32 = f32 + f64
+flong = f1 + d2
+r = :d0         # d0 will be interpreted as a rest
+bassThreadAmp = 1
+exitall = 0
+
+# notes and time are for 1 measure: 4 beats
+bassTimes = [f8,f8, f8, f8, f8, f8, f8, f8]
+# major
+#bassNotes_A = [:a1, :b1, :cs2, :e2, :a2, :fs2, :e2, :cs2]
+#bassNotes_D = [:d1, :e1, :fs2, :a2, :d2, :b2, :a2, :fs2]
+#bassNotes_E = [:E1, :FS1, :Gs2, :B2, :E2, :Cs2, :B2, :Gs2]
+#chord_A = [:a3, :cs3, :e3, :fs3]
+#chord_D = [:d3, :fs3, :a3, :b3]
+#chord_E = [:e3, :gs3, :b3, :cs3]
+
+#minor
+bassNotes_A = [:a1, :b1, :d2, :e2, :a2, :g2, :e2, :cs2]
+bassNotes_D = [:d1, :e1, :g2, :a2, :d2, :c2, :a2, :fs2]
+bassNotes_E = [:E1, :FS1, :a2, :B2, :E2, :d2, :B2, :Gs2]
+chord_A = [:a3, :d3, :e3, :g3]
+chord_D = [:d3, :g3, :a3, :c4]
+chord_E = [:e3, :a3, :b3, :d4]
+
+
+in_thread(name: :bass) {bassThread}
+in_thread(name: :ch) {chordThread}
+
+define :chordThread do
+  use_synth :saw
+  strum(chord_A)
+  print '---'
+  strum(chord_A)
+  strum(chord_A)
+  strum(chord_A)
+
+  strum(chord_D)
+  strum(chord_D)
+  strum(chord_A)
+  strum(chord_A)
+
+  strum(chord_E)
+  strum(chord_E)
+  strum(chord_A)
+  strum(chord_A)
+    
+end
+
+define :bassThread do
+  use_synth :saw
+  measure(bassTimes, bassNotes_A)
+  print '====='
+  measure(bassTimes, bassNotes_A)
+  measure(bassTimes, bassNotes_A)
+  measure(bassTimes, bassNotes_A)
+
+  measure(bassTimes, bassNotes_D)
+  measure(bassTimes, bassNotes_D)
+  measure(bassTimes, bassNotes_A)
+  measure(bassTimes, bassNotes_A)
+
+  measure(bassTimes, bassNotes_E)
+  measure(bassTimes, bassNotes_E)
+  measure(bassTimes, bassNotes_A)
+  measure(bassTimes, bassNotes_A)
+
+end
+define :strum do |chord|
+  play_pattern_timed [chord, chord, chord, chord ], [f8,d4,f4,f4 ], release: f8
+end
+
+define :measure do |times,notes|
+  j = 0
+  notes.each do |n|
+    length = times[j]
+    if (n != :d0) then 
+        play n, release: length
+    end
+    sleep length
+    j = j + 1
+  end
+end
